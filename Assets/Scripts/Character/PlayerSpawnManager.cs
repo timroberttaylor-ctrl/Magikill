@@ -167,7 +167,6 @@ namespace Magikill.Core
                 Debug.LogWarning("[PlayerSpawnManager] Cannot spawn player - not running as server!");
                 return;
             }
-
             if (_activePlayers.ContainsKey(playerRef))
             {
                 Debug.LogWarning($"[PlayerSpawnManager] Player {playerRef} already has a spawned character!");
@@ -175,6 +174,9 @@ namespace Magikill.Core
             }
 
             Debug.Log($"[PlayerSpawnManager] Spawning player for PlayerRef {playerRef}...");
+
+            // IMPORTANT: Refresh spawn points right before spawning to ensure they're valid
+            RefreshSpawnPoints();
 
             // Get spawn location
             var (spawnPosition, spawnRotation) = GetRandomSpawnPoint();
@@ -195,7 +197,6 @@ namespace Magikill.Core
                 {
                     // Track the spawned player
                     _activePlayers.Add(playerRef, spawnedPlayer);
-
                     Debug.Log($"[PlayerSpawnManager] Player {playerRef} spawned successfully at {spawnPosition}. Total players: {_activePlayers.Count}");
                 }
                 else

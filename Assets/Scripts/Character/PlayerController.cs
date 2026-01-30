@@ -122,6 +122,7 @@ namespace Magikill.Character
         /// </summary>
         public void OnInput(NetworkRunner runner, NetworkInput input)
         {
+            
             // Only collect input if this is our local player
             if (!HasInputAuthority)
             {

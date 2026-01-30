@@ -110,7 +110,6 @@ namespace Magikill.Core
         {
             // Check if NetworkRunner already exists
             _runner = FindObjectOfType<NetworkRunner>();
-
             if (_runner != null)
             {
                 Debug.Log("[NetworkManager] Found existing NetworkRunner.");
@@ -123,7 +122,10 @@ namespace Magikill.Core
             runnerObject.transform.SetParent(transform);
 
             _runner = runnerObject.AddComponent<NetworkRunner>();
-            _runner.ProvideInput = !isServer; // Only clients provide input in Server mode
+
+            // In Host mode, we ARE providing input (we're both server and player)
+            // In dedicated Server mode, we would set this to false
+            _runner.ProvideInput = true; // Host always provides input
 
             // Add callbacks
             _runner.AddCallbacks(this);
@@ -200,33 +202,28 @@ namespace Magikill.Core
                 Debug.LogError("[NetworkManager] Cannot start host - not initialized!");
                 return;
             }
-
             if (!isServer)
             {
                 Debug.LogError("[NetworkManager] Cannot start host - NetworkManager is in CLIENT mode!");
                 return;
             }
-
             if (_runner.IsRunning)
             {
                 Debug.LogWarning("[NetworkManager] Host is already running!");
                 return;
             }
-
             Debug.Log($"[NetworkManager] Starting as host... Session: {SESSION_NAME}");
-
             try
             {
                 var startGameArgs = new StartGameArgs()
                 {
-                    GameMode = GameMode.Host,  // Changed from Server to Host
+                    GameMode = GameMode.Host,
                     SessionName = SESSION_NAME,
-                    Scene = SceneRef.FromIndex(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex),
-                    SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
+                    // Remove Scene and SceneManager - we handle scenes manually
+                    Scene = default,  // No automatic scene loading
+                    SceneManager = null  // Don't let Fusion manage scenes
                 };
-
                 var result = await _runner.StartGame(startGameArgs);
-
                 if (result.Ok)
                 {
                     Debug.Log("[NetworkManager] Host started successfully!");

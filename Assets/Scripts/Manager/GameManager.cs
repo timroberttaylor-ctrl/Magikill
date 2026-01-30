@@ -51,6 +51,12 @@ namespace Magikill.Core
         /// </summary>
         public static PlayerSpawnManager PlayerSpawner => GetService<PlayerSpawnManager>();
 
+        /// <summary>
+        /// Quick access to CameraManager service.
+        /// Usage: GameManager.Camera.AssignCameraToPlayer(player);
+        /// </summary>
+        public static CameraManager Camera => GetService<CameraManager>();
+
         // Add more convenience properties here as you create services
         // Example: public static NetworkManager Network => GetService<NetworkManager>();
 
