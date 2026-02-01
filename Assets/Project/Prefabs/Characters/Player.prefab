@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 4112205649878123510}
   - component: {fileID: 2343776594031210128}
   - component: {fileID: 5391784769148130737}
+  - component: {fileID: 6096664643750845157}
+  - component: {fileID: 7412355971133687782}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -57,6 +59,8 @@ MonoBehaviour:
   - {fileID: 8746742456283040286}
   - {fileID: 2343776594031210128}
   - {fileID: 5391784769148130737}
+  - {fileID: 6096664643750845157}
+  - {fileID: 7412355971133687782}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &8746742456283040286
 MonoBehaviour:
@@ -119,10 +123,14 @@ MonoBehaviour:
       Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   _PlayerClass: 0
   _Level: 0
+  _BaseAttack: 0
+  _BaseDefense: 0
+  _BaseMaxHealth: 0
+  _BaseMaxMana: 0
+  _BaseAttackSpeed: 0
+  _BaseMovementSpeed: 0
   _Health: 0
-  _MaxHealth: 0
   _Mana: 0
-  _MaxMana: 0
 --- !u!114 &5391784769148130737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,6 +147,43 @@ MonoBehaviour:
   runSpeed: 6
   rotationSpeed: 10
   gravity: -9.81
+--- !u!114 &6096664643750845157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302010978033755089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee0ccabc9b87ccd42b9fb3e4487b7593, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  healthRegen: 2
+  maxMana: 100
+  manaRegen: 5
+  _CurrentHealth: 0
+  _CurrentMana: 0
+  _CooldownReduction: 0
+--- !u!114 &7412355971133687782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302010978033755089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 165b31191a9a2294f86af90e11ef1470, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skill1: {fileID: 11400000, guid: 9d0ca2687fcb463408e42c4ffa9af241, type: 2}
+  skill2: {fileID: 11400000, guid: 581658ab404104d49a4427a00191ebd1, type: 2}
+  skill3: {fileID: 11400000, guid: db9e496b6610238409606c80f99a2f6d, type: 2}
+  skill4: {fileID: 0}
+  skill5: {fileID: 0}
+  skill6: {fileID: 0}
 --- !u!1 &2908432540926592521
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c3983b7b273304e8c5c9b57aa4f20b, type: 3}
+  m_Name: BossLootTable
+  m_EditorClassIdentifier: 
+  lootEntries:
+  - itemData: {fileID: 11400000, guid: 03be47774bb67a44eb6b71d6d041fa12, type: 2}
+    minQuantity: 0
+    maxQuantity: 0
+    dropChance: 100
+    canBeUpgraded: 0
+    minUpgradeLevel: 0
+    maxUpgradeLevel: 0
+  - itemData: {fileID: 11400000, guid: 1cdc044f1ab2c7844881a124ca5d96dc, type: 2}
+    minQuantity: 0
+    maxQuantity: 0
+    dropChance: 5
+    canBeUpgraded: 1
+    minUpgradeLevel: 0
+    maxUpgradeLevel: 3
+  guaranteedGoldMin: 1
+  guaranteedGoldMax: 5

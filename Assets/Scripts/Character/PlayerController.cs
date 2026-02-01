@@ -10,6 +10,7 @@ namespace Magikill.Character
     /// Handles player input collection and character movement.
     /// Collects input via INetworkRunnerCallbacks and processes movement on the server.
     /// Uses CharacterController for ground-based movement with smooth speed and rotation.
+    /// Movement speed is affected by equipment bonuses.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(NetworkObject))]
@@ -19,11 +20,11 @@ namespace Magikill.Character
 
         [Header("Movement Speeds")]
         [SerializeField]
-        [Tooltip("Walking speed when joystick is barely pushed")]
+        [Tooltip("Base walking speed when joystick is barely pushed")]
         private float walkSpeed = 3f;
 
         [SerializeField]
-        [Tooltip("Running speed when joystick is fully pushed")]
+        [Tooltip("Base running speed when joystick is fully pushed")]
         private float runSpeed = 6f;
 
         [Header("Rotation")]
@@ -41,7 +42,10 @@ namespace Magikill.Character
         #region References
 
         private CharacterController _characterController;
-   
+        private Magikill.Networking.NetworkPlayer _networkPlayer;
+        private Animator _animator;
+        private Magikill.Combat.SkillSystem _skillSystem;
+
 
         #endregion
 
@@ -50,6 +54,8 @@ namespace Magikill.Character
         private Vector2 _currentMovementInput;
         private Vector2 _currentLookDirection;
         private float _verticalVelocity;
+        private float _movementAmount;
+
 
         #endregion
 
@@ -58,32 +64,30 @@ namespace Magikill.Character
         private void Awake()
         {
             _characterController = GetComponent<CharacterController>();
+            _networkPlayer = GetComponent<Magikill.Networking.NetworkPlayer>();
+
+            _animator = GetComponentInChildren<Animator>();
+            _skillSystem = GetComponent<Magikill.Combat.SkillSystem>();
+
+            if (_animator == null)
+            {
+                Debug.LogError("[PlayerController] Animator not found in children!");
+            }
 
             if (_characterController == null)
             {
                 Debug.LogError("[PlayerController] CharacterController component not found!");
             }
-        }
-        //Removed Runner code for local host
-        /*public override void Spawned()
-        {
-            // Register for input callbacks with NetworkRunner
-            _runner = Runner;
 
-            if (_runner != null)
+            if (_networkPlayer == null)
             {
-                _runner.AddCallbacks(this);
-                Debug.Log($"[PlayerController] Spawned and registered for input callbacks. HasInputAuthority: {HasInputAuthority}");
+                Debug.LogError("[PlayerController] NetworkPlayer component not found!");
             }
-            else
-            {
-                Debug.LogError("[PlayerController] NetworkRunner not found! Cannot register for input callbacks.");
-            }
-        }*/
+        }
+
         public override void Spawned()
         {
             // Register for input callbacks with NetworkRunner
-            //Remove code and use above Spawner for Server version not host
             if (Runner != null)
             {
                 Runner.AddCallbacks(this);
@@ -95,15 +99,6 @@ namespace Magikill.Character
             }
         }
 
-        //Removed Runner code for local host
-        /*public override void Despawned(NetworkRunner runner, bool hasState)
-        {
-            // Unregister callbacks when despawned
-            if (_runner != null)
-            {
-                _runner.RemoveCallbacks(this);
-            }
-        }*/
         public override void Despawned(NetworkRunner runner, bool hasState)
         {
             // Unregister callbacks when despawned
@@ -112,6 +107,7 @@ namespace Magikill.Character
                 Runner.RemoveCallbacks(this);
             }
         }
+
         #endregion
 
         #region Input Collection (INetworkRunnerCallbacks)
@@ -122,7 +118,6 @@ namespace Magikill.Character
         /// </summary>
         public void OnInput(NetworkRunner runner, NetworkInput input)
         {
-            
             // Only collect input if this is our local player
             if (!HasInputAuthority)
             {
@@ -192,6 +187,8 @@ namespace Magikill.Character
             {
                 ProcessNetworkInput(input);
             }
+            // Everyone updates animation (including proxies)
+            UpdateAnimator();
         }
 
         #endregion
@@ -213,8 +210,22 @@ namespace Magikill.Character
             // Process rotation
             ProcessRotation();
 
-            // TODO: Process combat input when combat system is ready
+            // Process skill inputs
+            if (_skillSystem != null)
+            {
+                // Find nearest enemy for auto-targeting
+                Transform target = FindNearestEnemy();
+
+                // Check each skill button
+                if (input.skill1Button) _skillSystem.UseSkill(0, target);
+                if (input.skill2Button) _skillSystem.UseSkill(1, target);
+                if (input.skill3Button) _skillSystem.UseSkill(2, target);
+                if (input.skill4Button) _skillSystem.UseSkill(3, target);
+                if (input.skill5Button) _skillSystem.UseSkill(4, target);
+                if (input.skill6Button) _skillSystem.UseSkill(5, target);
+            }
         }
+
 
         #endregion
 
@@ -227,15 +238,27 @@ namespace Magikill.Character
                 return;
             }
 
+            // Cache movement amount for animation (0 = idle, 1 = full input)
+            _movementAmount = _currentMovementInput.magnitude;
+
             // Calculate movement direction in world space
             Vector3 moveDirection = new Vector3(_currentMovementInput.x, 0f, _currentMovementInput.y);
 
             // Get input magnitude to determine speed (smooth interpolation between walk and run)
             float inputMagnitude = _currentMovementInput.magnitude;
-            float currentSpeed = Mathf.Lerp(walkSpeed, runSpeed, inputMagnitude);
+            float baseSpeed = Mathf.Lerp(walkSpeed, runSpeed, inputMagnitude);
+
+            // Apply equipment movement speed multiplier
+            float equipmentSpeedMultiplier = 1.0f;
+            if (_networkPlayer != null)
+            {
+                equipmentSpeedMultiplier = _networkPlayer.TotalMovementSpeed;
+            }
+
+            float finalSpeed = baseSpeed * equipmentSpeedMultiplier;
 
             // Apply speed to direction
-            Vector3 movement = moveDirection * currentSpeed;
+            Vector3 movement = moveDirection * finalSpeed;
 
             // Apply gravity
             if (_characterController.isGrounded)
@@ -279,6 +302,26 @@ namespace Magikill.Character
 
         #endregion
 
+        #region Update Animator
+
+        private void UpdateAnimator()
+        {
+            if (_animator == null)
+                return;
+
+            // Smooth animation transitions
+            _animator.SetFloat(
+                "Speed",
+                _movementAmount,
+                0.1f,
+                Runner != null ? Runner.DeltaTime : Time.deltaTime
+            );
+
+            _animator.SetBool("IsGrounded", _characterController.isGrounded);
+        }
+
+        #endregion
+
         #region INetworkRunnerCallbacks Implementation (Required but unused)
 
         // We only use OnInput, but must implement all interface methods
@@ -305,6 +348,51 @@ namespace Magikill.Character
 
         #endregion
 
+        // Add this helper method to find enemies for auto-targeting:
+
+        #region Enemy Targeting
+
+        [Header("Targeting")]
+        [SerializeField]
+        [Tooltip("Maximum range to find enemies for auto-targeting")]
+        private float autoTargetRange = 15f;
+
+        /// <summary>
+        /// Finds the nearest enemy within auto-target range.
+        /// </summary>
+        private Transform FindNearestEnemy()
+        {
+            // Find all enemies in the scene
+            var enemies = FindObjectsOfType<Magikill.Combat.EnemyStats>();
+
+            Transform nearestEnemy = null;
+            float nearestDistance = autoTargetRange;
+
+            foreach (var enemy in enemies)
+            {
+                // Check if enemy's NetworkObject is spawned before accessing networked properties
+                var networkObject = enemy.GetComponent<NetworkObject>();
+                if (networkObject == null || !networkObject.IsValid)
+                    continue;
+
+                // Now safe to check IsAlive
+                if (!enemy.IsAlive)
+                    continue;
+
+                float distance = Vector3.Distance(transform.position, enemy.transform.position);
+
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestEnemy = enemy.transform;
+                }
+            }
+
+            return nearestEnemy;
+        }
+
+        #endregion
+
         #region Debug Utilities
 
         [ContextMenu("Log Movement State")]
@@ -319,6 +407,14 @@ namespace Magikill.Character
             Debug.Log($"Vertical Velocity: {_verticalVelocity}");
             Debug.Log($"Position: {transform.position}");
             Debug.Log($"Rotation: {transform.rotation.eulerAngles}");
+
+            if (_networkPlayer != null)
+            {
+                Debug.Log($"Base Walk Speed: {walkSpeed}");
+                Debug.Log($"Base Run Speed: {runSpeed}");
+                Debug.Log($"Equipment Speed Multiplier: {_networkPlayer.TotalMovementSpeed:F2}x");
+                Debug.Log($"Final Speed Range: {walkSpeed * _networkPlayer.TotalMovementSpeed:F2} - {runSpeed * _networkPlayer.TotalMovementSpeed:F2}");
+            }
         }
 
         #endregion
